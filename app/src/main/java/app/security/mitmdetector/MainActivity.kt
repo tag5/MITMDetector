@@ -1,5 +1,6 @@
 package app.security.mitmdetector
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -38,6 +39,9 @@ class MainActivity : ComponentActivity() {
         }
 
         perms.askForNotificationsPermissionIfNeeded(this)
+
+        val intent = Intent("app.security.mitmdetector.ACTION_APP_STARTED")
+        sendBroadcast(intent)
     }
 }
 
