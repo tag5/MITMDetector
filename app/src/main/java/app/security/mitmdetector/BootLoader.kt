@@ -9,6 +9,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import app.security.mitmdetector.services.NotificationsService
 import app.security.mitmdetector.services.vulnerabilitychecks.DNSVulnerabilityCheck
+import app.security.mitmdetector.services.vulnerabilitychecks.HttpsCertificateVulnerabilityCheck
 import javax.inject.Singleton
 
 @Singleton
@@ -16,8 +17,12 @@ class NetworkCallback @Inject constructor(private val notificationsService: Noti
     @Inject
     lateinit var dnsCheck: DNSVulnerabilityCheck
 
+    @Inject
+    lateinit var httpsCheck: HttpsCertificateVulnerabilityCheck
+
     override fun onAvailable(network: Network) {
         dnsCheck.run()
+        httpsCheck.run()
     }
 
     override fun onLost(network: Network) {
