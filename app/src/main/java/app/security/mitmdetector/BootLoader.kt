@@ -7,22 +7,33 @@ import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.Network
+import app.security.mitmdetector.data.AuditResult
 import app.security.mitmdetector.services.NotificationsService
-import app.security.mitmdetector.services.vulnerabilitychecks.DNSVulnerabilityCheck
-import app.security.mitmdetector.services.vulnerabilitychecks.HttpsCertificateVulnerabilityCheck
+import app.security.mitmdetector.services.vulnerabilitychecks.VulnerabilityChecksProvider
 import javax.inject.Singleton
 
 @Singleton
 class NetworkCallback @Inject constructor(private val notificationsService: NotificationsService): ConnectivityManager.NetworkCallback() {
     @Inject
-    lateinit var dnsCheck: DNSVulnerabilityCheck
-
-    @Inject
-    lateinit var httpsCheck: HttpsCertificateVulnerabilityCheck
+    lateinit var checks: VulnerabilityChecksProvider
 
     override fun onAvailable(network: Network) {
-        dnsCheck.run()
-        httpsCheck.run()
+        val results = checks.getAll()
+            .map { check -> check.run() }
+            .filterNot { it is AuditResult.NoAlert }
+
+        if (results.size > 0) {
+                val s = StringBuilder()
+                for (result in results) {
+                    if (result is AuditResult.VulnerabilityDetected) {
+                        s.appendLine(result.message)
+                    } else if (result is AuditResult.Error) {
+                        s.appendLine("Network error: " + result.message)
+                    }
+                }
+
+            notificationsService.sendNotification(s.toString())
+        }
     }
 
     override fun onLost(network: Network) {
