@@ -8,6 +8,7 @@ import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.Network
 import app.security.mitmdetector.data.AuditResult
+import app.security.mitmdetector.services.DatabaseService
 import app.security.mitmdetector.services.NotificationsService
 import app.security.mitmdetector.services.vulnerabilitychecks.VulnerabilityChecksProvider
 import javax.inject.Singleton
@@ -17,8 +18,12 @@ class NetworkCallback @Inject constructor(private val notificationsService: Noti
     @Inject
     lateinit var checks: VulnerabilityChecksProvider
 
+    @Inject
+    lateinit var db: DatabaseService
+
     override fun onAvailable(network: Network) {
         val results = checks.getAll()
+            .filter { check -> db.isCheckEnabled(check.getCheckId()) }
             .map { check -> check.run() }
             .filterNot { it is AuditResult.NoAlert }
 
