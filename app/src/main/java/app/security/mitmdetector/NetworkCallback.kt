@@ -8,6 +8,11 @@ import app.security.mitmdetector.data.AuditResult
 import app.security.mitmdetector.services.DatabaseService
 import app.security.mitmdetector.services.NotificationsService
 import app.security.mitmdetector.services.vulnerabilitychecks.VulnerabilityChecksProvider
+import android.os.Handler
+import android.os.Looper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.launch
 
 /**
  * This NetworkCallback class is registred from BootLoader
@@ -23,7 +28,7 @@ class NetworkCallback @Inject constructor(): ConnectivityManager.NetworkCallback
     @Inject
     lateinit var db: DatabaseService
 
-    override fun onAvailable(network: Network) {
+    private fun launchChecks() {
         val results = checks.getAll()
             .filter { check -> db.isCheckEnabled(check.getCheckId()) }
             .map { check -> check.run() }
@@ -41,6 +46,16 @@ class NetworkCallback @Inject constructor(): ConnectivityManager.NetworkCallback
 
             notificationsService.sendNotification(s.toString())
         }
+    }
+
+    override fun onAvailable(network: Network) {
+        val handler = Handler(Looper.getMainLooper())
+
+        handler.postDelayed({
+            MainScope().launch(Dispatchers.IO) {
+                launchChecks()
+            }
+        }, 20000)
     }
 
     override fun onLost(network: Network) {
