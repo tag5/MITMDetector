@@ -8,16 +8,20 @@ import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.Network
 import app.security.mitmdetector.services.NotificationsService
+import app.security.mitmdetector.services.vulnerabilitychecks.DNSVulnerabilityCheck
 import javax.inject.Singleton
 
 @Singleton
 class NetworkCallback @Inject constructor(private val notificationsService: NotificationsService): ConnectivityManager.NetworkCallback() {
+    @Inject
+    lateinit var dnsCheck: DNSVulnerabilityCheck
+
     override fun onAvailable(network: Network) {
-        notificationsService.sendNotification("[tmp] network available")
+        dnsCheck.run()
     }
 
     override fun onLost(network: Network) {
-        notificationsService.sendNotification("[tmp] network lost")
+
     }
 }
 
